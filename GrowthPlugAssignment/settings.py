@@ -25,7 +25,7 @@ SECRET_KEY = 'qi&c4l1@j_2ea#v+4ued5p!)6+oabe&p=%h3$#2!+y!k-pivvu'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['growthplug-demo.herokuapp.com']
+ALLOWED_HOSTS = ['growthplug-demo.herokuapp.com', '127.0.0.1']
 
 
 # Application definition
@@ -37,9 +37,11 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'corsheaders'
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -67,6 +69,7 @@ TEMPLATES = [
     },
 ]
 
+CORS_ORIGIN_ALLOW_ALL = True
 WSGI_APPLICATION = 'GrowthPlugAssignment.wsgi.application'
 
 
