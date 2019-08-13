@@ -24,7 +24,7 @@ def is_logged_in(request):
 def save_user_token(request):
     try:
         params = request.POST
-        user_token = params['token']
+        user_token = params['access_token']
         state = json.loads(params['state'])
 
         token = {'logged_in': True, state['user_id']: user_token}
