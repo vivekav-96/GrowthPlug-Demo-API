@@ -3,6 +3,7 @@ import json
 import os
 
 from django.http import HttpResponse
+from django.views.decorators.csrf import csrf_exempt
 
 TOKENS_FILE = 'tokens.json'
 
@@ -37,6 +38,7 @@ def is_logged_in(request):
         return HttpResponse(json.dumps(result))
 
 
+@csrf_exempt
 def save_user_token(request):
     try:
         if 'access_token' in request.POST and 'user_id' in request.POST:
@@ -62,4 +64,21 @@ def save_user_token(request):
 
 
 def get_pages(request):
-    return HttpResponse('Must be implemented')
+    try:
+        if 'user_id' in request.GET:
+            user_id = request.GET['user_id']
+            result = {'user_id': user_id}
+            with open(TOKENS_FILE, 'r') as token_file:
+                tokens = json.load(token_file)
+            if user_id in tokens:
+                pass
+            else:
+                result['error'] = 'No such user found'
+                return HttpResponse(json.dumps(result))
+
+        else:
+            result = {'error': 'Pass valid user_id'}
+            return HttpResponse(json.dumps(result))
+    except Exception as e:
+        result = {'error': 'Internal Error', 'cause': e}
+        return HttpResponse(json.dumps(result))
