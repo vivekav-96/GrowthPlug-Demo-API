@@ -3,39 +3,62 @@ import json
 import os
 
 from django.http import HttpResponse
-from django.shortcuts import redirect
+
+TOKENS_FILE = 'tokens.json'
 
 
 def is_logged_in(request):
-    if not os.path.exists('token.json'):
-        return HttpResponse(json.dumps({'is_logged_in': False}))
-    else:
-        try:
-            with open('token.json', 'r') as token_file:
-                token_dict = json.load(token_file)
-                if 'logged_in' in token_dict and token_dict['logged_in']:
-                    return HttpResponse(json.dumps({'is_logged_in': True}))
-                else:
-                    return HttpResponse(json.dumps({'is_logged_in': False}))
-        except Exception as e:
-            return HttpResponse(json.dumps({'is_logged_in': False, 'exception': e}))
+    try:
+        if 'user_id' in request.GET:
+            user_id = request.GET['user_id']
+            result = {'user_id': user_id}
+            if not os.path.exists(TOKENS_FILE):
+                result['is_logged_in'] = False
+                return HttpResponse(json.dumps(result))
+            else:
+                with open(TOKENS_FILE, 'r') as token_file:
+                    token_dict = json.load(token_file)
+                    if user_id in token_dict:
+                        user = token_dict[user_id]
+                        if 'logged_in' in user and user['logged_in']:
+                            result['is_logged_in'] = True
+                            return HttpResponse(json.dumps(result))
+                        else:
+                            result['is_logged_in'] = False
+                            return HttpResponse(json.dumps(result))
+                    else:
+                        result['is_logged_in'] = False
+                        return HttpResponse(json.dumps(result))
+        else:
+            result = {'error': 'Pass valid user_id'}
+            return HttpResponse(json.dumps(result))
+    except Exception as e:
+        result = {'error': 'Internal Error', 'cause': e}
+        return HttpResponse(json.dumps(result))
 
 
 def save_user_token(request):
     try:
-        params = request.GET
-        user_token = params['access_token']
-        state = json.loads(params['state'])
+        if 'access_token' in request.POST and 'user_id' in request.POST:
+            user_token = request.POST['access_token']
+            user_id = request.POST['user_id']
+            if os.path.exists(TOKENS_FILE):
+                with open(TOKENS_FILE, 'r') as token_file:
+                    tokens = json.load(token_file)
+            else:
+                tokens = {}
 
-        token = {'logged_in': True, state['user_id']: user_token}
-
-        with open('token.json', 'w+') as token_file:
-            json.dump(token, token_file)
-
-        return redirect('https://growthplug-ui.herokuapp.com?logged_in=True')
+            with open(TOKENS_FILE, 'w+') as token_file:
+                tokens[user_id] = {'logged_in': True, 'access_token': user_token}
+                json.dump(tokens, token_file)
+            result = {'user_id': user_id, 'registered': True}
+            return HttpResponse(json.dumps(result))
+        else:
+            result = {'error': 'Pass valid user_id and access_token'}
+            return HttpResponse(json.dumps(result))
     except Exception as e:
-        print('Exception : ', e)
-        return redirect('https://growthplug-ui.herokuapp.com?exception=' + str(e))
+        result = {'error': 'Internal Error', 'cause': e}
+        return HttpResponse(json.dumps(result))
 
 
 def get_pages(request):
