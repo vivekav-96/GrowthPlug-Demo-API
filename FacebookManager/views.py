@@ -23,9 +23,7 @@ def is_logged_in(request):
 
 def save_user_token(request):
     try:
-        params = request.POST
-        for p in params:
-            print(p + ' - ' + params[p])
+        params = request.GET
         user_token = params['access_token']
         state = json.loads(params['state'])
 
@@ -36,7 +34,7 @@ def save_user_token(request):
 
         return redirect('https://growthplug-ui.herokuapp.com?logged_in=True')
     except Exception as e:
-        print('Exception : ' + e)
+        print('Exception : ', e)
         return redirect('https://growthplug-ui.herokuapp.com?exception=' + str(e))
 
 
