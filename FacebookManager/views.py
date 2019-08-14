@@ -114,15 +114,25 @@ def update_page_info(request):
             if user_id in tokens:
                 user = tokens[user_id]
                 if user['logged_in']:
+                    payload = {'access_token': access_token}
+
                     if 'about' in request.POST:
-                        about = request.POST['about']
-                        payload = {'description': about, 'access_token': access_token}
-                        response = requests.post(PAGE_UPDATE_URL.format(page_id), payload)
-                        print(response.json())
-                        return HttpResponse('You are the best')
-                    else:
-                        result['error'] = 'Pass valid page bio as parameter \'about\''
+                        payload['about'] = request.POST['about']
+                    if 'phone' in request.POST:
+                        payload['phone'] = request.POST['phone']
+                    if 'emails' in request.POST:
+                        payload['emails'] = [request.POST['emails']]
+                    if 'website' in request.POST:
+                        payload['website'] = request.POST['website']
+
+                    response = requests.post(PAGE_UPDATE_URL.format(page_id), json=payload).json()
+                    if 'success' in response and response['success']:
+                        result['success'] = True
                         return HttpResponse(json.dumps(result))
+                    else:
+                        result['success'] = False
+                        result['error'] = response['error']['message']
+                        return HttpResponse(json.dumps(response))
                 else:
                     result['is_logged_in'] = False
                     result['error'] = 'User is not logged in'
