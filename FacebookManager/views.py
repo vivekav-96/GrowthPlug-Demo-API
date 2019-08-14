@@ -9,6 +9,7 @@ from django.views.decorators.csrf import csrf_exempt
 TOKENS_FILE = 'tokens.json'
 GRAPH_API_URL = 'https://graph.facebook.com/'
 GET_PAGES_URL = GRAPH_API_URL + 'me/accounts'
+PAGE_UPDATE_URL = GRAPH_API_URL + '{}'
 
 
 def is_logged_in(request):
@@ -76,7 +77,7 @@ def get_pages(request):
                         pages = []
                         for page in pages_data['data']:
                             # print('Page - ' + page['name'] + '  ID - ' + page['id'])
-                            pages.append({'name': page['name'], 'id': page['id']})
+                            pages.append({'name': page['name'], 'id': page['id'], 'access_token': page['access_token']})
                         result['pages'] = pages
                         return HttpResponse(json.dumps(result))
                     else:
@@ -95,6 +96,42 @@ def get_pages(request):
 
         else:
             result = {'error': 'Pass valid user_id'}
+            return HttpResponse(json.dumps(result))
+    except Exception as e:
+        result = {'error': 'Internal Error', 'cause': e}
+        return HttpResponse(json.dumps(result))
+
+
+@csrf_exempt
+def update_page_info(request):
+    try:
+        if 'user_id' in request.POST and 'page_id' in request.POST and 'access_token' in request.POST:
+            user_id = request.POST['user_id']
+            page_id = request.POST['page_id']
+            access_token = request.POST['access_token']
+            result = {'user_id': user_id, 'page_id': page_id}
+            tokens = read_tokens()
+            if user_id in tokens:
+                user = tokens[user_id]
+                if user['logged_in']:
+                    if 'about' in request.POST:
+                        about = request.POST['about']
+                        payload = {'description': about, 'access_token': access_token}
+                        response = requests.post(PAGE_UPDATE_URL.format(page_id), payload)
+                        print(response.json())
+                        return HttpResponse('You are the best')
+                    else:
+                        result['error'] = 'Pass valid page bio as parameter \'about\''
+                        return HttpResponse(json.dumps(result))
+                else:
+                    result['is_logged_in'] = False
+                    result['error'] = 'User is not logged in'
+                    return HttpResponse(json.dumps(result))
+            else:
+                result['error'] = 'No such user found'
+                return HttpResponse(json.dumps(result))
+        else:
+            result = {'error': 'Pass valid user_id, page_id and access_token'}
             return HttpResponse(json.dumps(result))
     except Exception as e:
         result = {'error': 'Internal Error', 'cause': e}
