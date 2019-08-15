@@ -7,4 +7,5 @@ urlpatterns = [
     path('register', views.save_user_token, name='register'),
     path('get_pages', views.get_pages, name='get_pages'),
     path('update_page', views.update_page_info, name='update_page'),
+    path('revoke', views.revoke_all_permissions, name='revoke'),
 ]

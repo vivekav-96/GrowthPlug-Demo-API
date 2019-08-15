@@ -148,6 +148,18 @@ def update_page_info(request):
         return HttpResponse(json.dumps(result))
 
 
+@csrf_exempt
+def revoke_all_permissions(request):
+    try:
+        if os.path.exists(TOKENS_FILE):
+            os.remove(TOKENS_FILE)
+        result = {'success': True}
+        return HttpResponse(json.dumps(result))
+    except Exception as e:
+        result = {'error': 'Internal Error', 'cause': e}
+        return HttpResponse(json.dumps(result))
+
+
 def read_tokens():
     if os.path.exists(TOKENS_FILE):
         with open(TOKENS_FILE, 'r') as token_file:
